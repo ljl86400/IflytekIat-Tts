@@ -5,7 +5,9 @@ import android.app.Activity;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
+import android.media.MediaPlayer;
 import android.media.MediaRecorder;
+import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
 import android.support.v4.app.ActivityCompat;
@@ -17,6 +19,7 @@ import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.Window;
+import android.widget.AdapterView;
 import android.widget.BaseAdapter;
 import android.widget.Button;
 import android.widget.EditText;
@@ -43,20 +46,21 @@ import org.json.JSONObject;
 
 import java.io.File;
 import java.io.IOException;
+import java.net.URI;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.UUID;
 
-public class MainActivity extends Activity implements View.OnClickListener,View.OnLongClickListener{
+public class MainActivity extends Activity implements View.OnClickListener,View.OnLongClickListener {
 
     private HashMap<String, String> mIatResults = new LinkedHashMap<>();        // 用HashMap存储听写结果
     private EditText mResultTextEditorView;
     public SharedPreferences mSharedPreferences;
     public SpeechRecognizer mIatSpeechRecognizer;
     public RecognizerDialog mIatDialog;
-    private MyListAdapter mAdapter;     // 语音列表适配器
+    private MyListAdapter mVoicesFilesListAdapter;     // 语音列表适配器
     private static final String PATH = "/sdcard/MyVoiceForder/Record/";     // 录音存储路径
     private String mFileName = null;        // 语音文件保存路径
     private static final String LOG_TAG = "AudioRecordTest";        // log标记
@@ -74,11 +78,29 @@ public class MainActivity extends Activity implements View.OnClickListener,View.
         super.onCreate(savedInstanceState);             // 继承基类onCreate方法
         requestWindowFeature(Window.FEATURE_NO_TITLE);  // 去掉窗口的title
         setContentView(R.layout.activity_main);         // 设置主界面
-        initSpeech() ;
-        requestPermission();
+        initSpeech() ;                                  // 设置APPID
+        requestPermission();                            // 动态申请App所需要的权限
 
-        mVoicesFilesListView = findViewById(R.id.voidList);    // 设置显示语音列表内容的界面
         mVoicesFilesList = new ArrayList<>();                // 将存放语音文件信息的列表实例化
+        mVoicesFilesListView = findViewById(R.id.voidList);    // 设置显示语音列表内容的界面
+        mVoicesFilesListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            @Override
+            public void onItemClick (AdapterView<?> adapterView, View view, int position, long id) {
+                showTip(mVoicesFilesList.get(position));        // 显示所选取的录音文件的完整路径+文件名
+                // Uri uri = Uri.parse("file://" + mVoicesFilesList.get(position));   // 可以使用Uri格式的
+                
+                try {
+                    MediaPlayer mVoicesFilesPlayer = new MediaPlayer();
+                    mVoicesFilesPlayer.setDataSource(mVoicesFilesList.get(position));
+                    mVoicesFilesPlayer.prepare();
+                    mVoicesFilesPlayer.start();
+                }catch (Exception e){
+                    e.printStackTrace();
+                    // showTip("抛出播放声音时的异常");
+                    Log.e(TAG, "onItemClick: 播放声音出现异常" );
+                }
+            }
+        });
 
         initButton();                                   // 将界面中的按钮集中初始化，降低代码阅读的难度
 
@@ -130,6 +152,8 @@ public class MainActivity extends Activity implements View.OnClickListener,View.
             }
         });
     }
+
+
 
     /**
      *  设置APPID
@@ -251,37 +275,37 @@ public class MainActivity extends Activity implements View.OnClickListener,View.
     /** 开始录音 */
     private void startVoice() {
         mFileName = PATH + UUID.randomUUID().toString() + ".amr";       // 设置录音保存路径
-        String state = android.os.Environment.getExternalStorageState();
+        String state = android.os.Environment.getExternalStorageState();        // 获取外部存储器的状态
         if (!state.equals(android.os.Environment.MEDIA_MOUNTED)) {
             Log.i(LOG_TAG, "SD Card is not mounted,It is  " + state + ".");
-        }
-        File directory = new File(mFileName).getParentFile();
+        }       // 如果外部存储器没有加载，在log中打印一个错误提示
+        File directory = new File(mFileName).getParentFile();       // 获取语音文件的存储路径
         if (!directory.exists() && !directory.mkdirs()) {
             Log.i(LOG_TAG, "Path to file could not be created");
-        }
-        Toast.makeText(getApplicationContext(), "开始录音", Toast.LENGTH_SHORT).show();
-        mRecorder = new MediaRecorder();
-        mRecorder.setAudioSource(MediaRecorder.AudioSource.MIC);
-        mRecorder.setOutputFormat(MediaRecorder.OutputFormat.DEFAULT);
-        mRecorder.setOutputFile(mFileName);
-        mRecorder.setAudioEncoder(MediaRecorder.AudioEncoder.DEFAULT);
+        }       // 如果文件路径不存在且无法被创建，在log中打印一个错误提示
+        Toast.makeText(getApplicationContext(), "开始录音", Toast.LENGTH_SHORT).show();     // 抛出一个“开始录音”的提示
+        mRecorder = new MediaRecorder();        // 实例一个录音机对象
+        mRecorder.setAudioSource(MediaRecorder.AudioSource.MIC);        // 设置录音机对象的音源，这里设置的是从MIC获取声音
+        mRecorder.setOutputFormat(MediaRecorder.OutputFormat.DEFAULT);      // 设置输出文档的格式，Default应该是arm格式
+        mRecorder.setOutputFile(mFileName);             // 设置输出文档的文件名
+        mRecorder.setAudioEncoder(MediaRecorder.AudioEncoder.DEFAULT);      // 设置录音机录音的编码格式，Default应该是arm格式
         try {
             mRecorder.prepare();
         } catch (IOException e) {
             Log.e(LOG_TAG, "prepare() failed");
-        }
-        mRecorder.start();
+        }       // 录音机初始化，并判断是否有异常，捕捉异常
+        mRecorder.start();      // 开始录音
     }
 
     /** 停止录音 */
     private void stopVoice() {
-        mRecorder.stop();
-        mRecorder.release();
-        mRecorder = null;
-        mVoicesFilesList.add(mFileName);
-        mAdapter = new MyListAdapter(MainActivity.this);
-        mVoicesFilesListView.setAdapter(mAdapter);
-        Toast.makeText(getApplicationContext(), "保存录音" + mFileName, Toast.LENGTH_SHORT).show();
+        mRecorder.stop();       // 停止录音
+        mRecorder.release();        // 释放录音机对象
+        mRecorder = null;       // 清空录音机设置&内容
+        mVoicesFilesList.add(mFileName);        // 将录音文件添加到录音文件列表中
+        mVoicesFilesListAdapter = new MyListAdapter(MainActivity.this);        // 实例一个适配器
+        mVoicesFilesListView.setAdapter(mVoicesFilesListAdapter);       // 通过适配器将录音文件在列表界面中显示出来
+        Toast.makeText(getApplicationContext(), "保存录音" + mFileName, Toast.LENGTH_SHORT).show();     // 抛出一个录音成功的提示
     }
 
     private void showTip(final String str) {
