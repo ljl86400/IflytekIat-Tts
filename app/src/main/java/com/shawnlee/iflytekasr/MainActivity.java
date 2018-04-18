@@ -50,43 +50,59 @@ import java.util.List;
 import java.util.UUID;
 
 public class MainActivity extends Activity implements View.OnClickListener,View.OnLongClickListener{
-    // 用HashMap存储听写结果
-    private HashMap<String, String> mIatResults = new LinkedHashMap<>();
-    private EditText mResultText;
+
+    private HashMap<String, String> mIatResults = new LinkedHashMap<>();        // 用HashMap存储听写结果
+    private EditText mResultTextEditorView;
     public SharedPreferences mSharedPreferences;
     public SpeechRecognizer mIatSpeechRecognizer;
     public RecognizerDialog mIatDialog;
-    /** 语音列表适配器 */
-    private MyListAdapter mAdapter;
-    /** 录音存储路径 */
-    private static final String PATH = "/sdcard/MyVoiceForder/Record/";
-    /** 语音文件保存路径 */
-    private String mFileName = null;
-    /** log标记 */
-    private static final String LOG_TAG = "AudioRecordTest";
-    /** 用于完成录音 */
-    private MediaRecorder mRecorder = null;
-    /** 显示语音列表 */
-    private ListView mVoidListView;
-    /** 语音列表 */
-    private List<String> mVoicesList;
+    private MyListAdapter mAdapter;     // 语音列表适配器
+    private static final String PATH = "/sdcard/MyVoiceForder/Record/";     // 录音存储路径
+    private String mFileName = null;        // 语音文件保存路径
+    private static final String LOG_TAG = "AudioRecordTest";        // log标记
+    private MediaRecorder mRecorder = null;     // 用于完成录音
+    private ListView mVoicesFilesListView;      // 用于显示语音列表的对象
+    private List<String> mVoicesFilesList;      // 存放语音文件信息的语音列表对象；类似于目录性质的东西
     private Toast mToast;
     private boolean mTranslateEnable = false;
     public String TAG = MainActivity.class.getSimpleName();
-    // 引擎类型
-    private String mEngineType = SpeechConstant.TYPE_CLOUD;
+    private String mEngineType = SpeechConstant.TYPE_CLOUD;     // 引擎类型
     private List<String> permissionList = new ArrayList<>();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        requestWindowFeature(Window.FEATURE_NO_TITLE);//去掉窗口的title
-        setContentView(R.layout.activity_main);
+        super.onCreate(savedInstanceState);             // 继承基类onCreate方法
+        requestWindowFeature(Window.FEATURE_NO_TITLE);  // 去掉窗口的title
+        setContentView(R.layout.activity_main);         // 设置主界面
         initSpeech() ;
         requestPermission();
 
-        mVoidListView = findViewById(R.id.voidList);
-        mVoicesList = new ArrayList<>();
+        mVoicesFilesListView = findViewById(R.id.voidList);    // 设置显示语音列表内容的界面
+        mVoicesFilesList = new ArrayList<>();                // 将存放语音文件信息的列表实例化
+
+        initButton();                                   // 将界面中的按钮集中初始化，降低代码阅读的难度
+
+        /** 创建一个语音识别器，将已经初始化的语音监听器传给语音识别器的创建方法，
+         *  这个识别器应该是在云端，将本地的数据进行打包处理并传到云上去应该是监听器干的事情
+         */
+        mIatSpeechRecognizer = SpeechRecognizer.createRecognizer(MainActivity.this, initSpeechListener);
+
+        /** 将已经初始化的语音监听器当做构造参数，创建一个语音识别对话,这个对话应该是云上的服务，
+         *  意思是在云端建立了这个识别对话，跟我们平时理解的本地识别对话好像还不太一样
+         */
+        mIatDialog = new RecognizerDialog(MainActivity.this, initSpeechListener);
+
+        mSharedPreferences = getSharedPreferences(IatSettings.PREFER_NAME,
+                Activity.MODE_PRIVATE);     // 使用SharedPreferences的方式对语音听写的设置进行存储
+        mResultTextEditorView = findViewById(R.id.iat_text_edit_view);        // 设置文本消息编辑框的界面
+        mToast = Toast.makeText(this, "", Toast.LENGTH_SHORT);
+
+    }
+
+    /**
+     *  对界面中的按键进行初始化
+     */
+    private void initButton(){
         // 设置一个开始语音识别的按钮，并给按钮加上一个按键监听器
         Button startIatButton = findViewById(R.id.iat_button);
         Button startTtsButton = findViewById(R.id.tts_button);
@@ -95,36 +111,24 @@ public class MainActivity extends Activity implements View.OnClickListener,View.
         startIatButton.setOnClickListener(this);
         startTtsButton.setOnClickListener(this);
         startAudioStreamRecognizeButton.setOnClickListener(this);
+
         longTimeRecordAudioButton.setOnTouchListener(new View.OnTouchListener() {
 
-			@Override
-			public boolean onTouch(View v, MotionEvent event) {
-				switch (event.getAction()) {
-				case MotionEvent.ACTION_DOWN:
-					startVoice();
-					break;
-				case MotionEvent.ACTION_UP:
-					stopVoice();
-					break;
-				default:
-					break;
-				}
-				return false;
-			}
-		});
-
-        // 将已经初始化的语音监听器传给语音识别器的创建方法，并创建一个语音识别器，这个识别器应该是在云端，
-        // 将本地的数据进行打包处理并传到云上去应该是监听器干的事情
-        mIatSpeechRecognizer = SpeechRecognizer.createRecognizer(MainActivity.this, initSpeechListener);
-        // 将已经初始化的语音监听器当做构造参数，创建一个语音识别对话,这个对话应该是云上的服务，意思是在
-        // 云端建立了这个识别对话，跟我们平时理解的本地识别对话好像还不太一样
-        mIatDialog = new RecognizerDialog(MainActivity.this, initSpeechListener);
-        // 使用SharedPreferences的方式对语音听写的设置进行存储
-        mSharedPreferences = getSharedPreferences(IatSettings.PREFER_NAME,
-                Activity.MODE_PRIVATE);
-        mResultText = findViewById(R.id.iat_text);
-        mToast = Toast.makeText(this, "", Toast.LENGTH_SHORT);
-
+            @Override
+            public boolean onTouch(View v, MotionEvent event) {
+                switch (event.getAction()) {
+                    case MotionEvent.ACTION_DOWN:
+                        startVoice();
+                        break;
+                    case MotionEvent.ACTION_UP:
+                        stopVoice();
+                        break;
+                    default:
+                        break;
+                }
+                return false;
+            }
+        });
     }
 
     /**
@@ -199,7 +203,7 @@ public class MainActivity extends Activity implements View.OnClickListener,View.
     };
 
     /**
-     * 对界面中的按键动作进行响应
+     * 对界面中的按键动作响应进行设置
      * @param view
      */
     int ret = 0; // 函数调用返回值
@@ -246,8 +250,7 @@ public class MainActivity extends Activity implements View.OnClickListener,View.
 
     /** 开始录音 */
     private void startVoice() {
-        // 设置录音保存路径
-        mFileName = PATH + UUID.randomUUID().toString() + ".amr";
+        mFileName = PATH + UUID.randomUUID().toString() + ".amr";       // 设置录音保存路径
         String state = android.os.Environment.getExternalStorageState();
         if (!state.equals(android.os.Environment.MEDIA_MOUNTED)) {
             Log.i(LOG_TAG, "SD Card is not mounted,It is  " + state + ".");
@@ -275,9 +278,9 @@ public class MainActivity extends Activity implements View.OnClickListener,View.
         mRecorder.stop();
         mRecorder.release();
         mRecorder = null;
-        mVoicesList.add(mFileName);
+        mVoicesFilesList.add(mFileName);
         mAdapter = new MyListAdapter(MainActivity.this);
-        mVoidListView.setAdapter(mAdapter);
+        mVoicesFilesListView.setAdapter(mAdapter);
         Toast.makeText(getApplicationContext(), "保存录音" + mFileName, Toast.LENGTH_SHORT).show();
     }
 
@@ -301,7 +304,7 @@ public class MainActivity extends Activity implements View.OnClickListener,View.
      */
     private void iatEventActive(){
         FlowerCollector.onEvent(MainActivity.this, "iat_recognize");
-        mResultText.setText(null);// 清空显示内容
+        mResultTextEditorView.setText(null);// 清空显示内容
         mIatResults.clear();
         // 设置参数
         setParam();
@@ -327,7 +330,7 @@ public class MainActivity extends Activity implements View.OnClickListener,View.
     }
 
     private void ttsEventActive(){
-        if (mResultText.getText().toString().equals("")){
+        if (mResultTextEditorView.getText().toString().equals("")){
             Toast.makeText(MainActivity.this,"没有需要合成的文本",Toast.LENGTH_SHORT).show();
             return;
         }
@@ -345,12 +348,12 @@ public class MainActivity extends Activity implements View.OnClickListener,View.
         //仅支持保存为 pcm 和 wav 格式， 如果不需要保存合成音频，注释该行代码
         mTts.setParameter(SpeechConstant. TTS_AUDIO_PATH, "./sdcard/iflytek.pcm" );
         //3.开始合成
-        mTts.startSpeaking( mResultText.getText().toString(), new MySynthesizerListener()) ;
+        mTts.startSpeaking( mResultTextEditorView.getText().toString(), new MySynthesizerListener()) ;
         Toast.makeText(MainActivity.this,"语音合成开始",Toast.LENGTH_SHORT).show();
     }
 
     private void audioStreamRecognizeEventActive(){
-        mResultText.setText(null);// 清空显示内容
+        mResultTextEditorView.setText(null);// 清空显示内容
         mIatResults.clear();
         // 设置参数
         setParam();
@@ -584,7 +587,7 @@ public class MainActivity extends Activity implements View.OnClickListener,View.
         if( TextUtils.isEmpty(trans)||TextUtils.isEmpty(oris) ){
             showTip( "解析结果失败，请确认是否已开通翻译功能。" );
         }else{
-            mResultText.setText( "原始语言:\n"+oris+"\n目标语言:\n"+trans );
+            mResultTextEditorView.setText( "原始语言:\n"+oris+"\n目标语言:\n"+trans );
         }
 
     }
@@ -608,11 +611,13 @@ public class MainActivity extends Activity implements View.OnClickListener,View.
             resultBuffer.append(mIatResults.get(key));
         }
 
-        mResultText.setText(resultBuffer.toString());
-        mResultText.setSelection(mResultText.length());
+        mResultTextEditorView.setText(resultBuffer.toString());
+        mResultTextEditorView.setSelection(mResultTextEditorView.length());
     }
 
-    /** 语音列表适配器 */
+    /**
+     * 语音列表适配器
+     */
     private class MyListAdapter extends BaseAdapter {
         LayoutInflater mInflater;
 
@@ -622,7 +627,7 @@ public class MainActivity extends Activity implements View.OnClickListener,View.
 
         @Override
         public int getCount() {
-            return mVoicesList.size();
+            return mVoicesFilesList.size();
         }
 
         @Override
@@ -641,7 +646,7 @@ public class MainActivity extends Activity implements View.OnClickListener,View.
         public View getView(int position, View convertView, ViewGroup parent) {
             convertView = mInflater.inflate(R.layout.item_voicelist, null);
             TextView tv = convertView.findViewById(R.id.tv_armName);
-            tv.setText(mVoicesList.get(position));
+            tv.setText(mVoicesFilesList.get(position));
             return convertView;
         }
     }
