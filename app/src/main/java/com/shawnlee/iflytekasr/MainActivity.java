@@ -7,6 +7,7 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
+import android.media.AudioFormat;
 import android.media.AudioRecord;
 import android.media.MediaPlayer;
 import android.media.MediaRecorder;
@@ -76,6 +77,7 @@ public class MainActivity extends Activity implements View.OnClickListener,View.
     private String mEngineType = SpeechConstant.TYPE_CLOUD;     // 引擎类型
     private List<String> permissionList = new ArrayList<>();
     private String[] functionItems = new String[]{"播放","识别","删除"};
+    ExtAudioRecorder recorder;      // 获取录制PCM语音文件的实例
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -127,7 +129,7 @@ public class MainActivity extends Activity implements View.OnClickListener,View.
     }
 
     /**
-     * 定义一个监听器，用来监听提示对话框的点击动作
+     * 定义一个监听器类，用来监听提示对话框的点击动作
      */
     private class DialogButtonOnClick implements DialogInterface.OnClickListener
     {
@@ -344,7 +346,7 @@ public class MainActivity extends Activity implements View.OnClickListener,View.
     }
 
     /** 开始录音 */
-    private void startVoice() {
+   /*private void startVoice() {
         mFileName = PATH + UUID.randomUUID().toString() + ".amr";       // 设置录音保存路径
         String state = android.os.Environment.getExternalStorageState();        // 获取外部存储器的状态
 
@@ -372,10 +374,53 @@ public class MainActivity extends Activity implements View.OnClickListener,View.
         }       // 录音机初始化，并判断是否有异常，捕捉异常
 
         mRecorder.start();      // 开始录音
+    }*/
+
+   // 尝试使用PCM格式录制音频
+    private void startVoice() {
+        // 实现录音的代码
+        mFileName = PATH + UUID.randomUUID().toString() + ".wav";       // 设置录音保存路径
+        String state = android.os.Environment.getExternalStorageState();        // 获取外部存储器的状态
+
+        if (!state.equals(android.os.Environment.MEDIA_MOUNTED)) {
+            Log.i(LOG_TAG, "SD Card is not mounted,It is  " + state + ".");
+        }       // 如果外部存储器没有加载，在log中打印一个错误提示
+
+        File directory = new File(mFileName).getParentFile();       // 获取语音文件的存储路径
+
+        if (!directory.exists() && !directory.mkdirs()) {
+            Log.i(LOG_TAG, "Path to file could not be created");
+        }       // 如果文件路径不存在且无法被创建，在log中打印一个错误提示
+
+        Toast.makeText(getApplicationContext(), "开始录音", Toast.LENGTH_SHORT).show();     // 抛出一个“开始录音”的提示
+
+        AuditRecorderConfiguration configuration = new AuditRecorderConfiguration.Builder()
+                .recorderListener(listener)
+                .uncompressed(true)
+                .builder();
+        recorder = new ExtAudioRecorder(configuration);
+        // 设置输出文件
+        recorder.setOutputFile(mFileName);
+        recorder.prepare();
+        recorder.start();
     }
 
+    /**
+     * 录音失败的提示
+     */
+    ExtAudioRecorder.RecorderListener listener = new ExtAudioRecorder.RecorderListener() {
+        @Override
+        public void recordFailed(FailRecorder failRecorder) {
+            if (failRecorder.getType() == FailRecorder.FailType.NO_PERMISSION) {
+                Toast.makeText(MainActivity.this, "录音失败，可能是没有给权限", Toast.LENGTH_SHORT).show();
+            } else {
+                Toast.makeText(MainActivity.this, "发生了未知错误", Toast.LENGTH_SHORT).show();
+            }
+        }
+    };
+
     /** 停止录音 */
-    private void stopVoice() {
+    /*private void stopVoice() {
         mRecorder.stop();       // 停止录音
         mRecorder.release();        // 释放录音机对象
         mRecorder = null;       // 清空录音机设置&内容
@@ -383,6 +428,22 @@ public class MainActivity extends Activity implements View.OnClickListener,View.
         mVoicesFilesListAdapter = new MyListAdapter(MainActivity.this);        // 实例一个适配器
         mVoicesFilesListView.setAdapter(mVoicesFilesListAdapter);       // 通过适配器将录音文件在列表界面中显示出来
         Toast.makeText(getApplicationContext(), "保存录音" + mFileName, Toast.LENGTH_SHORT).show();     // 抛出一个录音成功的提示
+    }*/
+    // 尝试停止录制PCM格式声音
+    private void stopVoice() {
+        int time = recorder.stop();
+        if (time > 0) {
+            //成功的处理
+            recorder.reset();
+            mVoicesFilesList.add(mFileName);        // 将录音文件添加到录音文件列表中
+            mVoicesFilesListAdapter = new MyListAdapter(MainActivity.this);        // 实例一个适配器
+            mVoicesFilesListView.setAdapter(mVoicesFilesListAdapter);       // 通过适配器将录音文件在列表界面中显示出来
+            Toast.makeText(getApplicationContext(), "保存录音" + mFileName, Toast.LENGTH_SHORT).show();     // 抛出一个录音成功的提示
+        } else {
+            String st2 = new String("The_recording_time_is_too_short");
+            showTip(st2);
+        }
+
     }
 
     private void showTip(final String str) {
