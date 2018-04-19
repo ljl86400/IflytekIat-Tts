@@ -2,7 +2,9 @@ package com.shawnlee.iflytekasr;
 
 import android.Manifest;
 import android.app.Activity;
+import android.app.AlertDialog;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.media.MediaPlayer;
@@ -87,18 +89,16 @@ public class MainActivity extends Activity implements View.OnClickListener,View.
             @Override
             public void onItemClick (AdapterView<?> adapterView, View view, int position, long id) {
                 showTip(mVoicesFilesList.get(position));        // 显示所选取的录音文件的完整路径+文件名
-                // Uri uri = Uri.parse("file://" + mVoicesFilesList.get(position));   // 可以使用Uri格式的
-                
-                try {
-                    MediaPlayer mVoicesFilesPlayer = new MediaPlayer();
-                    mVoicesFilesPlayer.setDataSource(mVoicesFilesList.get(position));
-                    mVoicesFilesPlayer.prepare();
-                    mVoicesFilesPlayer.start();
-                }catch (Exception e){
-                    e.printStackTrace();
-                    // showTip("抛出播放声音时的异常");
-                    Log.e(TAG, "onItemClick: 播放声音出现异常" );
-                }
+                Uri fileUri = Uri.parse("file://" + mVoicesFilesList.get(position));   // 可以使用Uri格式的
+                AlertDialog.Builder mVoiceFilesProcessorDialog = new AlertDialog.Builder(MainActivity.this)
+                        .setTitle("选择功能")
+                        .setMessage("请选择你想要完成的功能。");
+                setNeutralButton1(mVoiceFilesProcessorDialog,fileUri)
+                .create()
+                .show();
+                /*setNeutralButton2(mVoiceFilesProcessorDialog,fileUri)
+                .create()
+                .show();*/
             }
         });
 
@@ -119,6 +119,37 @@ public class MainActivity extends Activity implements View.OnClickListener,View.
         mResultTextEditorView = findViewById(R.id.iat_text_edit_view);        // 设置文本消息编辑框的界面
         mToast = Toast.makeText(this, "", Toast.LENGTH_SHORT);
 
+    }
+
+    private AlertDialog.Builder setNeutralButton1(AlertDialog.Builder builder, final Uri uri){
+        return builder.setNeutralButton("播放", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialogInterface,int i) {
+                playSound(uri);
+            }
+        });
+    }
+
+    private AlertDialog.Builder setNeutralButton2(AlertDialog.Builder builder, final Uri uri){
+        return builder.setNeutralButton("识别音频流", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialogInterface,int i) {
+                showTip("准备音频流识别");
+            }
+        });
+    }
+
+    private void playSound(Uri uri){
+        try {
+            MediaPlayer mVoicesFilesPlayer = new MediaPlayer();
+            mVoicesFilesPlayer.setDataSource(MainActivity.this,uri);
+            mVoicesFilesPlayer.prepare();
+            mVoicesFilesPlayer.start();
+        }catch (Exception e){
+            e.printStackTrace();
+            // showTip("抛出播放声音时的异常");
+            Log.e(TAG, "onItemClick: 播放声音出现异常" );
+        }
     }
 
     /**
