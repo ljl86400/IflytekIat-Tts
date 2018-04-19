@@ -7,6 +7,7 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
+import android.media.AudioRecord;
 import android.media.MediaPlayer;
 import android.media.MediaRecorder;
 import android.net.Uri;
@@ -74,6 +75,7 @@ public class MainActivity extends Activity implements View.OnClickListener,View.
     public String TAG = MainActivity.class.getSimpleName();
     private String mEngineType = SpeechConstant.TYPE_CLOUD;     // 引擎类型
     private List<String> permissionList = new ArrayList<>();
+    private String[] functionItems = new String[]{"播放","识别","删除"};
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -85,20 +87,23 @@ public class MainActivity extends Activity implements View.OnClickListener,View.
 
         mVoicesFilesList = new ArrayList<>();                // 将存放语音文件信息的列表实例化
         mVoicesFilesListView = findViewById(R.id.voidList);    // 设置显示语音列表内容的界面
+        /**
+         * 为列表中的选项添加按键响应，跳出一个单选列表项提示对话框
+         */
         mVoicesFilesListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+
+
             @Override
             public void onItemClick (AdapterView<?> adapterView, View view, int position, long id) {
-                showTip(mVoicesFilesList.get(position));        // 显示所选取的录音文件的完整路径+文件名
+                DialogButtonOnClick dialogButtonOnClick = new DialogButtonOnClick(0);       // 默认选中了第一个选项(播放)
                 Uri fileUri = Uri.parse("file://" + mVoicesFilesList.get(position));   // 可以使用Uri格式的
+                dialogButtonOnClick.setUri(fileUri);
                 AlertDialog.Builder mVoiceFilesProcessorDialog = new AlertDialog.Builder(MainActivity.this)
                         .setTitle("选择功能")
-                        .setMessage("请选择你想要完成的功能。");
-                setNeutralButton1(mVoiceFilesProcessorDialog,fileUri)
-                .create()
-                .show();
-                /*setNeutralButton2(mVoiceFilesProcessorDialog,fileUri)
-                .create()
-                .show();*/
+                        .setSingleChoiceItems(functionItems, 0,dialogButtonOnClick)
+                        .setPositiveButton("确认",dialogButtonOnClick)
+                        .setNegativeButton("取消",dialogButtonOnClick);
+                mVoiceFilesProcessorDialog.create().show();
             }
         });
 
@@ -121,22 +126,57 @@ public class MainActivity extends Activity implements View.OnClickListener,View.
 
     }
 
-    private AlertDialog.Builder setNeutralButton1(AlertDialog.Builder builder, final Uri uri){
-        return builder.setNeutralButton("播放", new DialogInterface.OnClickListener() {
-            @Override
-            public void onClick(DialogInterface dialogInterface,int i) {
-                playSound(uri);
-            }
-        });
-    }
+    /**
+     * 定义一个监听器，用来监听提示对话框的点击动作
+     */
+    private class DialogButtonOnClick implements DialogInterface.OnClickListener
+    {
 
-    private AlertDialog.Builder setNeutralButton2(AlertDialog.Builder builder, final Uri uri){
-        return builder.setNeutralButton("识别音频流", new DialogInterface.OnClickListener() {
-            @Override
-            public void onClick(DialogInterface dialogInterface,int i) {
-                showTip("准备音频流识别");
+        private int index; // 表示选项的索引
+        private Uri uri ;
+
+        private DialogButtonOnClick(int index)
+        {
+            this.index = index;
+        }
+
+        public void setUri(Uri uri){
+            this.uri = uri;
+        }
+
+        @Override
+        public void onClick(DialogInterface dialog, int which)
+        {
+            switch (which){
+                case 0:
+                case 1:
+                case 2:
+                    index = which;
+                    Log.d(TAG, "onClick:which " + which);
+                    Log.d(TAG, "onClick:index " + index);
+                    break;
+                case DialogInterface.BUTTON_POSITIVE:
+                    switch (index){
+                        case 0:
+                            playSound(uri);
+                            break;
+                        case 1:
+                            showTip("识别功能待添加");
+                            break;
+                        case 2:
+                            showTip("删除功能待添加");
+                            break;
+                        default:
+                            break;
+                    }
+                    break;
+                case DialogInterface.BUTTON_NEGATIVE:
+                    showTip("取消并退出");
+                    break;
+                default:
+                    break;
             }
-        });
+        }
     }
 
     private void playSound(Uri uri){
@@ -307,14 +347,19 @@ public class MainActivity extends Activity implements View.OnClickListener,View.
     private void startVoice() {
         mFileName = PATH + UUID.randomUUID().toString() + ".amr";       // 设置录音保存路径
         String state = android.os.Environment.getExternalStorageState();        // 获取外部存储器的状态
+
         if (!state.equals(android.os.Environment.MEDIA_MOUNTED)) {
             Log.i(LOG_TAG, "SD Card is not mounted,It is  " + state + ".");
         }       // 如果外部存储器没有加载，在log中打印一个错误提示
+
         File directory = new File(mFileName).getParentFile();       // 获取语音文件的存储路径
+
         if (!directory.exists() && !directory.mkdirs()) {
             Log.i(LOG_TAG, "Path to file could not be created");
         }       // 如果文件路径不存在且无法被创建，在log中打印一个错误提示
+
         Toast.makeText(getApplicationContext(), "开始录音", Toast.LENGTH_SHORT).show();     // 抛出一个“开始录音”的提示
+
         mRecorder = new MediaRecorder();        // 实例一个录音机对象
         mRecorder.setAudioSource(MediaRecorder.AudioSource.MIC);        // 设置录音机对象的音源，这里设置的是从MIC获取声音
         mRecorder.setOutputFormat(MediaRecorder.OutputFormat.DEFAULT);      // 设置输出文档的格式，Default应该是arm格式
@@ -325,6 +370,7 @@ public class MainActivity extends Activity implements View.OnClickListener,View.
         } catch (IOException e) {
             Log.e(LOG_TAG, "prepare() failed");
         }       // 录音机初始化，并判断是否有异常，捕捉异常
+
         mRecorder.start();      // 开始录音
     }
 
