@@ -7,6 +7,7 @@ import static android.content.ContentValues.TAG;
 
 /**
  * Created by Shawn.Lee on 2018/4/23.
+ * 定义一个监听器类，用来监听提示对话框的点击动作
  */
 
 class DialogButtonOnClick implements DialogInterface.OnClickListener {

@@ -64,10 +64,10 @@ public class MainActivity extends Activity implements View.OnClickListener,View.
     public SharedPreferences mSharedPreferences;
     public SpeechRecognizer mIatSpeechRecognizer;       // 对应原demo中的mIat
     public RecognizerDialog mIatDialog;
-    private MyListAdapter mVoicesFilesListAdapter;     // 语音列表适配器
+    private MyListAdapter mVoicesFilesListAdapter;// = new MyListAdapter(MainActivity.this);     // 语音列表适配器
+    private List<String> mVoicesFilesList;      // 存放语音文件信息的语音列表对象；类似于目录性质的东西
     private PcmVoiceRecorder myPcmVoiceRecorder = new PcmVoiceRecorder();
     private ListView mVoicesFilesListView;      // 用于显示语音列表的对象
-    private List<String> mVoicesFilesList;      // 存放语音文件信息的语音列表对象；类似于目录性质的东西
     private Toast mToast;
     private boolean mTranslateEnable = false;
     public String TAG = MainActivity.class.getSimpleName();
@@ -86,6 +86,7 @@ public class MainActivity extends Activity implements View.OnClickListener,View.
         requestPermission();                            // 动态申请App所需要的权限
 
         mVoicesFilesList = new ArrayList<>();                // 将存放语音文件信息的列表实例化
+        // mVoicesFilesListAdapter.setList(mVoicesFilesList);
         mVoicesFilesListView = findViewById(R.id.voidList);    // 设置显示语音列表内容的界面
         /**
          * 为列表中的选项添加按键响应，跳出一个单选列表项提示对话框
@@ -159,65 +160,6 @@ public class MainActivity extends Activity implements View.OnClickListener,View.
         mToast = Toast.makeText(this, "", Toast.LENGTH_SHORT);
 
     }
-
-    /**
-     * 定义一个监听器类，用来监听提示对话框的点击动作
-     */
-    /*private class DialogButtonOnClick implements DialogInterface.OnClickListener
-    {
-
-        private int index; // 表示选项的索引
-        private Uri uri ;
-        private Integer position;
-
-        private DialogButtonOnClick(int index)
-        {
-            this.index = index;
-        }
-
-        public void setUri(Uri uri){
-            this.uri = uri;
-        }
-
-        public void setPosition(Integer position){
-            this.position = position;
-        }
-
-        @Override
-        public void onClick(DialogInterface dialog, int which)
-        {
-            switch (which){
-                case 0:
-                case 1:
-                case 2:
-                    index = which;
-                    Log.d(TAG, "onClick:which " + which);
-                    Log.d(TAG, "onClick:index " + index);
-                    break;
-                case DialogInterface.BUTTON_POSITIVE:
-                    switch (index){
-                        case 0:
-                            playSound(uri);
-                            break;
-                        case 1:
-                            recognizeStream(position);
-                            // showTip("识别功能待添加");
-                            break;
-                        case 2:
-                            showTip("删除功能待添加");
-                            break;
-                        default:
-                            break;
-                    }
-                    break;
-                case DialogInterface.BUTTON_NEGATIVE:
-                    showTip("取消并退出");
-                    break;
-                default:
-                    break;
-            }
-        }
-    }*/
 
     // 完成播放功能
     private void playSound(Uri uri){
