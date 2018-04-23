@@ -1,13 +1,11 @@
 package com.shawnlee.iflytekasr;
 
 import android.util.Log;
-import android.widget.Toast;
-
 import java.io.File;
 import java.util.UUID;
 
 /**
- * Created by TonnyZ on 2018/4/23.
+ * Created by Shawn.Lee on 2018/4/23.
  */
 
 class PcmVoiceRecorder {
@@ -16,23 +14,9 @@ class PcmVoiceRecorder {
     private String mPcmFileName;
     private ExtAudioRecorder recorder;      // 获取录制PCM语音文件的实例
 
-    public String getFileName(){
-        return mPcmFileName;
-    }
-
-    public String getPcmAudioPATH(){
-        return PcmAudioPATH;
-    }
-
-    public String getLogTag(){
-        return LOG_TAG;
-    }
-
-    public ExtAudioRecorder getRecorder(){
-        return recorder;
-    }
-
-    // 尝试开始PCM格式录制音频
+    /**
+     * 开始PCM格式音频录制
+     */
     public void startVoice() {
         // 实现录音的代码
         mPcmFileName = getPcmAudioPATH() + UUID.randomUUID().toString() + ".wav";       // 设置录音保存路径
@@ -60,7 +44,9 @@ class PcmVoiceRecorder {
         recorder.start();
     }
 
-    // 尝试停止录制PCM格式声音
+    /**
+     * 停止PCM格式音频录制
+     */
     public void stopVoice() {
         int time = recorder.stop();
         if (time > 0) {
@@ -86,4 +72,17 @@ class PcmVoiceRecorder {
             }
         }
     };
+
+    public String getFileName(){
+        return mPcmFileName;
+    }
+
+    public String getPcmAudioPATH(){
+        return PcmAudioPATH;
+    }
+
+    public String getLogTag(){
+        return LOG_TAG;
+    }
+
 }
