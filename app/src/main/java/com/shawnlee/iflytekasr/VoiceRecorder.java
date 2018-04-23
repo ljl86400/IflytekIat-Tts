@@ -1,16 +1,14 @@
 package com.shawnlee.iflytekasr;
 
-import android.content.Context;
 import android.media.MediaRecorder;
 import android.util.Log;
-import android.widget.Toast;
 
 import java.io.File;
 import java.io.IOException;
 import java.util.UUID;
 
 /**
- * Created by TonnyZ on 2018/4/23.
+ * Created by Shawn.Lee on 2018/4/23.
  */
 
 class VoiceRecorder {
