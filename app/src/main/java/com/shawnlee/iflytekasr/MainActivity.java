@@ -64,8 +64,7 @@ public class MainActivity extends Activity implements View.OnClickListener,View.
     public SharedPreferences mSharedPreferences;
     public SpeechRecognizer mIatSpeechRecognizer;       // 对应原demo中的mIat
     public RecognizerDialog mIatDialog;
-    private MyListAdapter mVoicesFilesListAdapter;// = new MyListAdapter(MainActivity.this);     // 语音列表适配器
-    private List<String> mVoicesFilesList;      // 存放语音文件信息的语音列表对象；类似于目录性质的东西
+    private MyListAdapter mVoicesFilesListAdapter ;     // 语音列表适配器
     private PcmVoiceRecorder myPcmVoiceRecorder = new PcmVoiceRecorder();
     private ListView mVoicesFilesListView;      // 用于显示语音列表的对象
     private Toast mToast;
@@ -85,7 +84,7 @@ public class MainActivity extends Activity implements View.OnClickListener,View.
         initSpeech() ;                                  // 设置APPID
         requestPermission();                            // 动态申请App所需要的权限
 
-        mVoicesFilesList = new ArrayList<>();                // 将存放语音文件信息的列表实例化
+        mVoicesFilesListAdapter = new MyListAdapter(MainActivity.this);
         // mVoicesFilesListAdapter.setList(mVoicesFilesList);
         mVoicesFilesListView = findViewById(R.id.voidList);    // 设置显示语音列表内容的界面
         /**
@@ -130,7 +129,7 @@ public class MainActivity extends Activity implements View.OnClickListener,View.
                         }
                     }
                 };       // 默认选中了第一个选项(播放)
-                Uri fileUri = Uri.parse("file://" + mVoicesFilesList.get(position));   // 可以使用Uri格式的
+                Uri fileUri = Uri.parse("file://" + mVoicesFilesListAdapter.getList().get(position));   // 可以使用Uri格式的
                 dialogButtonOnClick.setUri(fileUri);
                 dialogButtonOnClick.setPosition(position);
                 AlertDialog.Builder mVoiceFilesProcessorDialog = new AlertDialog.Builder(MainActivity.this)
@@ -201,8 +200,8 @@ public class MainActivity extends Activity implements View.OnClickListener,View.
                     case MotionEvent.ACTION_UP:
                         // stopVoice();
                         myPcmVoiceRecorder.stopVoice();
-                        mVoicesFilesList.add(myPcmVoiceRecorder.getFileName());        // 将录音文件添加到录音文件列表中
-                        mVoicesFilesListAdapter = new MainActivity.MyListAdapter(MainActivity.this);        // 实例一个适配器
+                        mVoicesFilesListAdapter.getList().add(myPcmVoiceRecorder.getFileName());        // 将录音文件添加到录音文件列表中
+                        // mVoicesFilesListAdapter = new MainActivity.MyListAdapter(MainActivity.this);        // 实例一个适配器
                         mVoicesFilesListView.setAdapter(mVoicesFilesListAdapter);       // 通过适配器将录音文件在列表界面中显示出来
                         showTip("保存录音" + myPcmVoiceRecorder.getFileName());     // 抛出一个录音成功的提示
                         break;
@@ -354,7 +353,8 @@ public class MainActivity extends Activity implements View.OnClickListener,View.
         if (ret != ErrorCode.SUCCESS) {
             showTip("识别失败,错误码：" + ret);
         } else {
-            Log.d(TAG, "获取选中音频流的完整地址:" + mVoicesFilesList.get(position));
+            Log.d(TAG, "获取选中音频流的完整地址:" + mVoicesFilesListAdapter.getList().get(position));
+            List<String> mVoicesFilesList = mVoicesFilesListAdapter.getList();                // 将存放语音文件信息的列表实例化,mVoiceFileList是局部变量，可以被重构
             byte[] audioData = FucUtil.readAudioFile(MainActivity.this,mVoicesFilesList.get(position));
             Log.d(TAG, "recognizeStream:音频流写入 " + audioData);
 
@@ -675,39 +675,4 @@ public class MainActivity extends Activity implements View.OnClickListener,View.
         mResultTextEditorView.setSelection(mResultTextEditorView.length());
     }
 
-    /**
-     * 语音列表适配器
-     */
-    private class MyListAdapter extends BaseAdapter {
-        LayoutInflater mInflater;
-
-        public MyListAdapter(Context context) {
-            mInflater = LayoutInflater.from(context);
-        }
-
-        @Override
-        public int getCount() {
-            return mVoicesFilesList.size();
-        }
-
-        @Override
-        public Object getItem(int position) {
-
-            return position;
-        }
-
-        @Override
-        public long getItemId(int position) {
-
-            return position;
-        }
-
-        @Override
-        public View getView(int position, View convertView, ViewGroup parent) {
-            convertView = mInflater.inflate(R.layout.item_voicelist, null);
-            TextView tv = convertView.findViewById(R.id.tv_armName);
-            tv.setText(mVoicesFilesList.get(position));
-            return convertView;
-        }
-    }
 }
