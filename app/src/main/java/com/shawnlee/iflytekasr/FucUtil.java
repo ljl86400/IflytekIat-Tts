@@ -12,6 +12,9 @@ import com.iflytek.cloud.SpeechConstant;
 import com.iflytek.cloud.SpeechUtility;
 
 import android.content.Context;
+import android.util.Log;
+
+import static android.content.ContentValues.TAG;
 
 /**
  * 功能性函数扩展类
@@ -127,18 +130,28 @@ public class FucUtil {
      * @return 二进制文件数据
      */
     public static byte[] readAudioFile(Context context, String filename) {
+        InputStream ins = null;
         try {
-            InputStream ins = context.getAssets().open(filename);
-            byte[] data = new byte[ins.available()];
+            // ins = context.getAssets().open(filename);
+            ins = context.getAssets().open(filename);
+        } catch (IOException e) {
+            e.printStackTrace();
+            Log.e(TAG, "readAudioFile: 打开文件出问题");
+        }
+        try {
 
+            byte[] data = new byte[ins.available()];
             ins.read(data);
             ins.close();
-
             return data;
         } catch (IOException e) {
             // TODO Auto-generated catch block
             e.printStackTrace();
+            Log.e(TAG, "readAudioFile: 文件转流出问题");
         }
+
+
+
 
         return null;
     }

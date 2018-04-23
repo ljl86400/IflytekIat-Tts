@@ -60,15 +60,13 @@ import java.util.UUID;
 public class MainActivity extends Activity implements View.OnClickListener,View.OnLongClickListener {
 
     private HashMap<String, String> mIatResults = new LinkedHashMap<>();        // 用HashMap存储听写结果
-    private EditText mResultTextEditorView;
+    private EditText mResultTextEditorView;             // 对应原demo中的mResult
     public SharedPreferences mSharedPreferences;
-    public SpeechRecognizer mIatSpeechRecognizer;
+    public SpeechRecognizer mIatSpeechRecognizer;       // 对应原demo中的mIat
     public RecognizerDialog mIatDialog;
     private MyListAdapter mVoicesFilesListAdapter;     // 语音列表适配器
-    private static final String PATH = "/sdcard/MyVoiceForder/Record/";     // 录音存储路径
+    private VoiceRecorder myVoiceRecorder = new VoiceRecorder();
     private String mFileName = null;        // 语音文件保存路径
-    private static final String LOG_TAG = "AudioRecordTest";        // log标记
-    private MediaRecorder mRecorder = null;     // 用于完成录音
     private ListView mVoicesFilesListView;      // 用于显示语音列表的对象
     private List<String> mVoicesFilesList;      // 存放语音文件信息的语音列表对象；类似于目录性质的东西
     private Toast mToast;
@@ -78,6 +76,7 @@ public class MainActivity extends Activity implements View.OnClickListener,View.
     private List<String> permissionList = new ArrayList<>();
     private String[] functionItems = new String[]{"播放","识别","删除"};
     ExtAudioRecorder recorder;      // 获取录制PCM语音文件的实例
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -100,6 +99,7 @@ public class MainActivity extends Activity implements View.OnClickListener,View.
                 DialogButtonOnClick dialogButtonOnClick = new DialogButtonOnClick(0);       // 默认选中了第一个选项(播放)
                 Uri fileUri = Uri.parse("file://" + mVoicesFilesList.get(position));   // 可以使用Uri格式的
                 dialogButtonOnClick.setUri(fileUri);
+                dialogButtonOnClick.setPosition(position);
                 AlertDialog.Builder mVoiceFilesProcessorDialog = new AlertDialog.Builder(MainActivity.this)
                         .setTitle("选择功能")
                         .setSingleChoiceItems(functionItems, 0,dialogButtonOnClick)
@@ -136,6 +136,7 @@ public class MainActivity extends Activity implements View.OnClickListener,View.
 
         private int index; // 表示选项的索引
         private Uri uri ;
+        private Integer position;
 
         private DialogButtonOnClick(int index)
         {
@@ -144,6 +145,10 @@ public class MainActivity extends Activity implements View.OnClickListener,View.
 
         public void setUri(Uri uri){
             this.uri = uri;
+        }
+
+        public void setPosition(Integer position){
+            this.position = position;
         }
 
         @Override
@@ -163,7 +168,8 @@ public class MainActivity extends Activity implements View.OnClickListener,View.
                             playSound(uri);
                             break;
                         case 1:
-                            showTip("识别功能待添加");
+                            recognizeStream(position);
+                            // showTip("识别功能待添加");
                             break;
                         case 2:
                             showTip("删除功能待添加");
@@ -181,6 +187,7 @@ public class MainActivity extends Activity implements View.OnClickListener,View.
         }
     }
 
+    // 完成播放功能
     private void playSound(Uri uri){
         try {
             MediaPlayer mVoicesFilesPlayer = new MediaPlayer();
@@ -324,7 +331,6 @@ public class MainActivity extends Activity implements View.OnClickListener,View.
                 ttsEventActive();
                 break;
             case R.id.iat_recognize_stream_button:
-                audioStreamRecognizeEventActive();
                 this.showTip( "音频流识别按键已经响应" );
                 break;
             default:
@@ -345,51 +351,20 @@ public class MainActivity extends Activity implements View.OnClickListener,View.
         return false;
     }
 
-    /** 开始录音 */
-   /*private void startVoice() {
-        mFileName = PATH + UUID.randomUUID().toString() + ".amr";       // 设置录音保存路径
-        String state = android.os.Environment.getExternalStorageState();        // 获取外部存储器的状态
-
-        if (!state.equals(android.os.Environment.MEDIA_MOUNTED)) {
-            Log.i(LOG_TAG, "SD Card is not mounted,It is  " + state + ".");
-        }       // 如果外部存储器没有加载，在log中打印一个错误提示
-
-        File directory = new File(mFileName).getParentFile();       // 获取语音文件的存储路径
-
-        if (!directory.exists() && !directory.mkdirs()) {
-            Log.i(LOG_TAG, "Path to file could not be created");
-        }       // 如果文件路径不存在且无法被创建，在log中打印一个错误提示
-
-        Toast.makeText(getApplicationContext(), "开始录音", Toast.LENGTH_SHORT).show();     // 抛出一个“开始录音”的提示
-
-        mRecorder = new MediaRecorder();        // 实例一个录音机对象
-        mRecorder.setAudioSource(MediaRecorder.AudioSource.MIC);        // 设置录音机对象的音源，这里设置的是从MIC获取声音
-        mRecorder.setOutputFormat(MediaRecorder.OutputFormat.DEFAULT);      // 设置输出文档的格式，Default应该是arm格式
-        mRecorder.setOutputFile(mFileName);             // 设置输出文档的文件名
-        mRecorder.setAudioEncoder(MediaRecorder.AudioEncoder.DEFAULT);      // 设置录音机录音的编码格式，Default应该是arm格式
-        try {
-            mRecorder.prepare();
-        } catch (IOException e) {
-            Log.e(LOG_TAG, "prepare() failed");
-        }       // 录音机初始化，并判断是否有异常，捕捉异常
-
-        mRecorder.start();      // 开始录音
-    }*/
-
-   // 尝试使用PCM格式录制音频
+   // 尝试开始PCM格式录制音频
     private void startVoice() {
         // 实现录音的代码
-        mFileName = PATH + UUID.randomUUID().toString() + ".wav";       // 设置录音保存路径
+        mFileName = myVoiceRecorder.getPath() + UUID.randomUUID().toString() + ".wav";       // 设置录音保存路径
         String state = android.os.Environment.getExternalStorageState();        // 获取外部存储器的状态
 
         if (!state.equals(android.os.Environment.MEDIA_MOUNTED)) {
-            Log.i(LOG_TAG, "SD Card is not mounted,It is  " + state + ".");
+            Log.i(myVoiceRecorder.getLogTag(), "SD Card is not mounted,It is  " + state + ".");
         }       // 如果外部存储器没有加载，在log中打印一个错误提示
 
         File directory = new File(mFileName).getParentFile();       // 获取语音文件的存储路径
 
         if (!directory.exists() && !directory.mkdirs()) {
-            Log.i(LOG_TAG, "Path to file could not be created");
+            Log.i(myVoiceRecorder.getLogTag(), "Path to file could not be created");
         }       // 如果文件路径不存在且无法被创建，在log中打印一个错误提示
 
         Toast.makeText(getApplicationContext(), "开始录音", Toast.LENGTH_SHORT).show();     // 抛出一个“开始录音”的提示
@@ -420,15 +395,6 @@ public class MainActivity extends Activity implements View.OnClickListener,View.
     };
 
     /** 停止录音 */
-    /*private void stopVoice() {
-        mRecorder.stop();       // 停止录音
-        mRecorder.release();        // 释放录音机对象
-        mRecorder = null;       // 清空录音机设置&内容
-        mVoicesFilesList.add(mFileName);        // 将录音文件添加到录音文件列表中
-        mVoicesFilesListAdapter = new MyListAdapter(MainActivity.this);        // 实例一个适配器
-        mVoicesFilesListView.setAdapter(mVoicesFilesListAdapter);       // 通过适配器将录音文件在列表界面中显示出来
-        Toast.makeText(getApplicationContext(), "保存录音" + mFileName, Toast.LENGTH_SHORT).show();     // 抛出一个录音成功的提示
-    }*/
     // 尝试停止录制PCM格式声音
     private void stopVoice() {
         int time = recorder.stop();
@@ -444,6 +410,48 @@ public class MainActivity extends Activity implements View.OnClickListener,View.
             showTip(st2);
         }
 
+    }
+
+    /**
+     * 完成音频流识别功能
+     */
+    private void recognizeStream(Integer position){
+        mResultTextEditorView.setText(null);// 清空显示内容
+        mIatResults.clear();
+        // 设置参数
+        setParam();
+
+        // 设置mIatSpeechRecognizer的音频来源(AUDIO_SOURCE)为外部文件,关键字：1代表来源于MIC，-1代表来源于写入的音频流
+        // -2来源于某个路径下的文件
+        //默认:麦克风(1)(MediaRecorder.AudioSource.MIC)
+        //在写音频流方式(-1)下，应用层通过writeAudio函数送入音频；
+        //在传文件路径方式（-2）下，SDK通过应用层设置的ASR_SOURCE_PATH值， 直接读取音频文件。目前仅在SpeechRecognizer中支持。
+        mIatSpeechRecognizer.setParameter(SpeechConstant.AUDIO_SOURCE, "-1");
+        // 也可以像以下这样直接设置音频文件路径识别（要求设置文件在sdcard上的全路径）：
+        // mIatSpeechRecognizer.setParameter(SpeechConstant.AUDIO_SOURCE, "-2");
+        // mIatSpeechRecognizer.setParameter(SpeechConstant.ASR_SOURCE_PATH, "/sdcard/MyVoiceForder/Record/dd990669-5d8a-4f4a-94ee-e7b5bb0f027d.wav");
+        ret = mIatSpeechRecognizer.startListening(mRecognizerListener);
+        if (ret != ErrorCode.SUCCESS) {
+            showTip("识别失败,错误码：" + ret);
+        } else {
+            Log.d(TAG, "获取选中音频流的完整地址:" + mVoicesFilesList.get(position));
+            byte[] audioData = FucUtil.readAudioFile(MainActivity.this,mVoicesFilesList.get(position));
+            Log.d(TAG, "recognizeStream:音频流写入 " + audioData);
+
+            if (null != audioData) {
+                Log.d(TAG, "recognizeStream: 开始识别");
+                // 一次（也可以分多次）写入音频文件数据，数据格式必须是采样率为8KHz或16KHz（本地识别只支持16K采样率，云端都支持），
+                // 位长16bit，单声道的wav或者pcm
+                // 写入8KHz采样的音频时，必须先调用setParameter(SpeechConstant.SAMPLE_RATE, "8000")设置正确的采样率
+                // 注：当音频过长，静音部分时长超过VAD_EOS将导致静音后面部分不能识别。
+                // 音频切分方法：FucUtil.splitBuffer(byte[] buffer,int length,int spsize);
+                mIatSpeechRecognizer.writeAudio(audioData, 0, audioData.length);
+                mIatSpeechRecognizer.stopListening();
+            } else {
+                mIatSpeechRecognizer.cancel();
+                Log.d(TAG, "recognizeStream: 读取音频流失败");
+            }
+        }
     }
 
     private void showTip(final String str) {
@@ -514,37 +522,7 @@ public class MainActivity extends Activity implements View.OnClickListener,View.
         Toast.makeText(MainActivity.this,"语音合成开始",Toast.LENGTH_SHORT).show();
     }
 
-    private void audioStreamRecognizeEventActive(){
-        mResultTextEditorView.setText(null);// 清空显示内容
-        mIatResults.clear();
-        // 设置参数
-        setParam();
-        // 设置音频来源为外部文件
-        mIatSpeechRecognizer.setParameter(SpeechConstant.AUDIO_SOURCE, "-1");
-        // 也可以像以下这样直接设置音频文件路径识别（要求设置文件在sdcard上的全路径）：
-        // mIat.setParameter(SpeechConstant.AUDIO_SOURCE, "-2");
-        // mIat.setParameter(SpeechConstant.ASR_SOURCE_PATH, "sdcard/XXX/XXX.pcm");
-        ret = mIatSpeechRecognizer.startListening(mRecognizerListener);
-        if (ret != ErrorCode.SUCCESS) {
-            showTip("识别失败,错误码：" + ret);
-        } else {
-            byte[] audioData = FucUtil.readAudioFile(MainActivity.this, "iattest.wav");
 
-            if (null != audioData) {
-                showTip(getString(R.string.text_begin_recognizer));
-                // 一次（也可以分多次）写入音频文件数据，数据格式必须是采样率为8KHz或16KHz（本地识别只支持16K采样率，云端都支持），
-                // 位长16bit，单声道的wav或者pcm
-                // 写入8KHz采样的音频时，必须先调用setParameter(SpeechConstant.SAMPLE_RATE, "8000")设置正确的采样率
-                // 注：当音频过长，静音部分时长超过VAD_EOS将导致静音后面部分不能识别。
-                // 音频切分方法：FucUtil.splitBuffer(byte[] buffer,int length,int spsize);
-                mIatSpeechRecognizer.writeAudio(audioData, 0, audioData.length);
-                mIatSpeechRecognizer.stopListening();
-            } else {
-                mIatSpeechRecognizer.cancel();
-                showTip("读取音频流失败");
-            }
-        }
-    }
 
     class MySynthesizerListener implements SynthesizerListener {
 

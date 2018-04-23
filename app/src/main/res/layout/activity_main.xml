@@ -80,6 +80,6 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="10dp"
-        android:text="音频流识别"
+        android:text="语音对话"
         android:textSize="20sp" />
 </LinearLayout>
