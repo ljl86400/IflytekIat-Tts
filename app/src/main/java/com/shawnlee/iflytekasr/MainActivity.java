@@ -59,7 +59,7 @@ import java.util.UUID;
 
 public class MainActivity extends Activity implements View.OnClickListener,View.OnLongClickListener {
 
-    private HashMap<String, String> mIatResults = new LinkedHashMap<>();        // 用HashMap存储听写结果
+    private Results myResults = new Results();
     private EditText mResultTextEditorView;             // 对应原demo中的mResult
     public SharedPreferences mSharedPreferences;
     public SpeechRecognizer mIatSpeechRecognizer;       // 对应原demo中的mIat
@@ -336,7 +336,7 @@ public class MainActivity extends Activity implements View.OnClickListener,View.
      */
     private void recognizeStream(Integer position){
         mResultTextEditorView.setText(null);// 清空显示内容
-        mIatResults.clear();
+        myResults.getmIatResults().clear();
         // 设置参数
         setParam();
 
@@ -395,7 +395,7 @@ public class MainActivity extends Activity implements View.OnClickListener,View.
     private void iatEventActive(){
         FlowerCollector.onEvent(MainActivity.this, "iat_recognize");
         mResultTextEditorView.setText(null);// 清空显示内容
-        mIatResults.clear();
+        myResults.getmIatResults().clear();
         // 设置参数
         setParam();
         // getString方法返回字符串iat_show,defValue是初始默认值，如果没有需要判断的对象就
@@ -561,9 +561,9 @@ public class MainActivity extends Activity implements View.OnClickListener,View.
     private RecognizerDialogListener mRecognizerDialogListener = new RecognizerDialogListener() {
         public void onResult(RecognizerResult results, boolean isLast) {
             if( mTranslateEnable ){
-                printTransResult( results );
+                myResults.printTransResult( results,mResultTextEditorView );
             }else{
-                printResult(results);
+                myResults.printResult(results,mResultTextEditorView);
             }
         }
 
@@ -613,10 +613,10 @@ public class MainActivity extends Activity implements View.OnClickListener,View.
             Log.d(TAG, results.getResultString());
             if( mTranslateEnable ){
                 // 在 mIatResult 的textView中显示翻译后的语音识别结果
-                printTransResult( results );
+                myResults.printTransResult( results ,mResultTextEditorView);
             }else{
                 // 在 mIatResult 的textView中显示语音识别结果
-                printResult(results);
+                myResults.printResult(results,mResultTextEditorView);
             }
 
             if (isLast) {
@@ -640,39 +640,4 @@ public class MainActivity extends Activity implements View.OnClickListener,View.
             //	}
         }
     };
-
-    private void printTransResult (RecognizerResult results) {
-        String trans  = JsonParser.parseTransResult(results.getResultString(),"dst");
-        String oris = JsonParser.parseTransResult(results.getResultString(),"src");
-        if( TextUtils.isEmpty(trans)||TextUtils.isEmpty(oris) ){
-            showTip( "解析结果失败，请确认是否已开通翻译功能。" );
-        }else{
-            mResultTextEditorView.setText( "原始语言:\n"+oris+"\n目标语言:\n"+trans );
-        }
-
-    }
-
-    private void printResult(RecognizerResult results) {
-        String text = JsonParser.parseIatResult(results.getResultString());
-
-        String sn = null;
-        // 读取json结果中的sn字段
-        try {
-            JSONObject resultJson = new JSONObject(results.getResultString());
-            sn = resultJson.optString("sn");
-        } catch (JSONException e) {
-            e.printStackTrace();
-        }
-
-        mIatResults.put(sn, text);
-
-        StringBuffer resultBuffer = new StringBuffer();
-        for (String key : mIatResults.keySet()) {
-            resultBuffer.append(mIatResults.get(key));
-        }
-
-        mResultTextEditorView.setText(resultBuffer.toString());
-        mResultTextEditorView.setSelection(mResultTextEditorView.length());
-    }
-
 }
