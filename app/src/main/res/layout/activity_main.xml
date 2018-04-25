@@ -75,11 +75,37 @@
             android:textSize="20sp" />
     </LinearLayout>
 
-    <Button
-        android:id="@+id/iat_recognize_stream_button"
+
+
+    <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="10dp"
-        android:text="语音对话"
+        android:layout_marginBottom="2dp"
+        android:gravity="center_horizontal"
+        android:orientation="horizontal" >
+
+    <Button
+        android:id="@+id/record_audio_start_button"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:text="录音开始"
         android:textSize="20sp" />
+
+    <Button
+        android:id="@+id/record_audio_stop_button"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:text="录音结束"
+        android:textSize="20sp" />
+
+    <Button
+        android:id="@+id/start_aec_button"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="打开AEC"
+        android:textSize="20sp" />
+    </LinearLayout>
+
 </LinearLayout>

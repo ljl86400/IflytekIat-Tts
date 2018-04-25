@@ -182,10 +182,14 @@ public class MainActivity extends Activity implements View.OnClickListener,View.
         Button startIatButton = findViewById(R.id.iat_button);
         Button startTtsButton = findViewById(R.id.tts_button);
         Button longTimeRecordAudioButton = findViewById(R.id.record_audio_button);
-        Button startAudioStreamRecognizeButton = findViewById(R.id.iat_recognize_stream_button);
+        Button startAecButton = findViewById(R.id.start_aec_button);
+        Button startRecordAudioButton = findViewById(R.id.record_audio_start_button);
+        Button stopRecordAudioButton = findViewById(R.id.record_audio_stop_button);
         startIatButton.setOnClickListener(this);
         startTtsButton.setOnClickListener(this);
-        startAudioStreamRecognizeButton.setOnClickListener(this);
+        startAecButton.setOnClickListener(this);
+        startRecordAudioButton.setOnClickListener(this);
+        stopRecordAudioButton.setOnClickListener(this);
 
         longTimeRecordAudioButton.setOnTouchListener(new View.OnTouchListener() {
 
@@ -314,8 +318,19 @@ public class MainActivity extends Activity implements View.OnClickListener,View.
             case R.id.tts_button:
                 ttsEventActive();
                 break;
-            case R.id.iat_recognize_stream_button:
-                this.showTip( "音频流识别按键已经响应" );
+            case R.id.record_audio_start_button:
+                myPcmVoiceRecorder.startVoice();
+                this.showTip("开始录音");
+                break;
+            case R.id.record_audio_stop_button:
+                myPcmVoiceRecorder.stopVoice();
+                mVoicesFilesListAdapter.getList().add(myPcmVoiceRecorder.getFileName());        // 将录音文件添加到录音文件列表中
+                // mVoicesFilesListAdapter = new MainActivity.MyListAdapter(MainActivity.this);        // 实例一个适配器
+                mVoicesFilesListView.setAdapter(mVoicesFilesListAdapter);       // 通过适配器将录音文件在列表界面中显示出来
+                showTip("保存录音" + myPcmVoiceRecorder.getFileName());     // 抛出一个录音成功的提示
+                break;
+            case R.id.start_aec_button:
+                this.showTip("回声消除功能已经打开");
                 break;
             default:
                 break;
