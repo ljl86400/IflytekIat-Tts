@@ -115,10 +115,9 @@ public class ExtAudioRecorder {
         return state;
     }
 
-    /*
-     *
-     * Method used for recording.
-     */
+    /**
+      * 录音的使用方法
+      */
     private AudioRecord.OnRecordPositionUpdateListener updateListener = new AudioRecord.OnRecordPositionUpdateListener() {
         public void onPeriodicNotification(AudioRecord recorder) {
             audioRecorder.read(buffer, 0, buffer.length); // Fill buffer

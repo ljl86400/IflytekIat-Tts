@@ -22,6 +22,21 @@ public class AuditRecorderConfiguration {
     private int format = AudioFormat.ENCODING_PCM_16BIT;
     private Handler handler;
 
+    /**
+     * 构造方法，输入参数是内部类的一个对象
+     * @param builder
+     */
+    private AuditRecorderConfiguration(Builder builder){
+        this.listener = builder.listener;
+        this.uncompressed = builder.uncompressed;
+        this.timerInterval = builder.timerInterval;
+        this.rate = builder.rate;
+        this.source = builder.source;
+        this.format = builder.format;
+        this.handler = builder.handler;
+        this.channelConfig = builder.channelConfig;
+    }
+
     public static AuditRecorderConfiguration createDefaule(){
         return new Builder().builder();
     }
@@ -58,17 +73,6 @@ public class AuditRecorderConfiguration {
 
     public int getChannelConfig(){
         return channelConfig;
-    }
-
-    private AuditRecorderConfiguration(Builder builder){
-        this.listener = builder.listener;
-        this.uncompressed = builder.uncompressed;
-        this.timerInterval = builder.timerInterval;
-        this.rate = builder.rate;
-        this.source = builder.source;
-        this.format = builder.format;
-        this.handler = builder.handler;
-        this.channelConfig = builder.channelConfig;
     }
 
     public static class Builder{

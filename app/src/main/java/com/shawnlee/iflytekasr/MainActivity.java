@@ -266,6 +266,10 @@ public class MainActivity extends Activity implements View.OnClickListener,View.
                 != PackageManager.PERMISSION_GRANTED){
             permissionList.add( Manifest.permission.WRITE_SETTINGS);
         }
+        if (ContextCompat.checkSelfPermission(MainActivity.this, Manifest.permission.MODIFY_AUDIO_SETTINGS)
+                != PackageManager.PERMISSION_GRANTED){
+            permissionList.add( Manifest.permission.MODIFY_AUDIO_SETTINGS);
+        }
         if (!permissionList.isEmpty()){
             String[] permissions = permissionList.toArray(new String[permissionList.size()]);
             ActivityCompat.requestPermissions(MainActivity.this,permissions,1);
@@ -441,8 +445,6 @@ public class MainActivity extends Activity implements View.OnClickListener,View.
         mTts.startSpeaking( mResultTextEditorView.getText().toString(), new MySynthesizerListener()) ;
         Toast.makeText(MainActivity.this,"语音合成开始",Toast.LENGTH_SHORT).show();
     }
-
-
 
     class MySynthesizerListener implements SynthesizerListener {
 

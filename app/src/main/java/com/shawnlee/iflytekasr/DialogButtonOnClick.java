@@ -2,8 +2,7 @@ package com.shawnlee.iflytekasr;
 
 import android.content.DialogInterface;
 import android.net.Uri;
-import android.util.Log;
-import static android.content.ContentValues.TAG;
+
 
 /**
  * Created by Shawn.Lee on 2018/4/23.
