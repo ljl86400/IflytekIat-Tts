@@ -8,10 +8,12 @@ import android.content.DialogInterface;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.media.AudioFormat;
+import android.media.AudioManager;
 import android.media.AudioRecord;
 import android.media.MediaPlayer;
 import android.media.MediaRecorder;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
 import android.support.v4.app.ActivityCompat;
@@ -23,6 +25,7 @@ import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.Window;
+import android.view.WindowManager;
 import android.widget.AdapterView;
 import android.widget.BaseAdapter;
 import android.widget.Button;
@@ -330,6 +333,13 @@ public class MainActivity extends Activity implements View.OnClickListener,View.
                 showTip("保存录音" + myPcmVoiceRecorder.getFileName());     // 抛出一个录音成功的提示
                 break;
             case R.id.start_aec_button:
+                AudioAec m_audio = null;
+                getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+                AudioManager audioManager = (AudioManager) this.getSystemService(Context.AUDIO_SERVICE);
+                audioManager.setMode(AudioManager.MODE_IN_COMMUNICATION);
+                // audioManager.setSpeakerphoneOn(true);
+                m_audio = new AudioAec();
+                m_audio.StartRecorderAndPlayer();   //你是要把采集到的声音全部滤除吗？
                 this.showTip("回声消除功能已经打开");
                 break;
             default:

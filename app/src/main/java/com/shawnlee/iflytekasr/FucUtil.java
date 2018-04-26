@@ -1,5 +1,7 @@
 package com.shawnlee.iflytekasr;
 
+import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
@@ -12,6 +14,7 @@ import com.iflytek.cloud.SpeechConstant;
 import com.iflytek.cloud.SpeechUtility;
 
 import android.content.Context;
+import android.os.Environment;
 import android.util.Log;
 
 import static android.content.ContentValues.TAG;
@@ -132,8 +135,12 @@ public class FucUtil {
     public static byte[] readAudioFile(Context context, String filename) {
         InputStream ins = null;
         try {
-            // ins = context.getAssets().open(filename);
-            ins = context.getAssets().open(filename);
+            // ins = context.getAssets().open(filename);        // 将特定文件夹下的文件写成流
+            File file = new File(filename);         // 根据文件名，新建一个文件实例
+            ins = new FileInputStream(file);         // 将文件内容写成流，接受的参数是File object，filename只是一个String object
+            /*byte[] b = new byte[inputStream.available()];           // 新建一个二进制数组,数组大小、内容按照ins有效长度判定
+            is.read(b);                 // 将新建的二进制数组读取到流当中？？？
+            String result = new String(b);      // 把二进制数组作为参数，新建字符串对象，作为输出结果*/
         } catch (IOException e) {
             e.printStackTrace();
             Log.e(TAG, "readAudioFile: 打开文件出问题");
@@ -149,9 +156,6 @@ public class FucUtil {
             e.printStackTrace();
             Log.e(TAG, "readAudioFile: 文件转流出问题");
         }
-
-
-
 
         return null;
     }
