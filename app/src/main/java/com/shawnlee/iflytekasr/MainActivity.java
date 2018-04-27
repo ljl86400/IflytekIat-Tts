@@ -118,7 +118,22 @@ public class MainActivity extends Activity implements View.OnClickListener,View.
                                         // showTip("识别功能待添加");
                                         break;
                                     case 2:
-                                        showTip("删除功能待添加");
+                                        Log.d(TAG, "onClick: " + uri.toString());
+                                        File file = new File(uri.toString());
+                                        System.gc();
+                                        boolean success = file.delete();
+                                        /*boolean result = false;
+                                        int tryCount = 0;
+                                        while(!result && tryCount++ <10)
+                                        {
+                                            System.gc();
+                                            result = file.delete();
+                                        }*/
+                                        if ( success ){
+                                            Log.d(TAG, "onClick: 成功删除文件");
+                                        } else {
+                                            Log.d(TAG, "onClick: 删除功能待添加");
+                                        }
                                         break;
                                     default:
                                         break;
