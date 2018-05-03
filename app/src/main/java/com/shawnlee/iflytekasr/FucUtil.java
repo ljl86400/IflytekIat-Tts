@@ -1,7 +1,9 @@
 package com.shawnlee.iflytekasr;
 
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
@@ -132,7 +134,7 @@ public class FucUtil {
      *
      * @return 二进制文件数据
      */
-    public static byte[] readAudioFile(Context context, String filename) {
+    public static byte[] readAudioFile(String filename) {
         InputStream ins = null;
         try {
             // ins = context.getAssets().open(filename);        // 将特定文件夹下的文件写成流
@@ -158,6 +160,53 @@ public class FucUtil {
         }
 
         return null;
+    }
+
+    /**
+     * 读取asset目录下音频文件。
+     *
+     * @return 二进制文件数据
+     */
+    public static byte[] readAudioFil(Context context, String filename) {
+        try {
+            InputStream ins = context.getAssets().open(filename);
+            byte[] data = new byte[ins.available()];
+
+            ins.read(data);
+            ins.close();
+
+            return data;
+        } catch (IOException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
+
+        return null;
+    }
+
+    /**
+     * 获得指定文件的byte数组
+     */
+    public static byte[] getBytes(String filePath){
+        byte[] buffer = null;
+        try {
+            File file = new File(filePath);
+            FileInputStream fis = new FileInputStream(file);
+            ByteArrayOutputStream bos = new ByteArrayOutputStream();
+            byte[] b = new byte[1000];
+            int n;
+            while ((n = fis.read(b)) != -1) {
+                bos.write(b, 0, n);
+            }
+            fis.close();
+            bos.close();
+            buffer = bos.toByteArray();
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return buffer;
     }
 
 }

@@ -9,7 +9,7 @@ import android.os.Handler;
  */
 public class AuditRecorderConfiguration {
 
-    public static final int[] SAMPLE_RATES = {44100, 22050, 11025, 8000};
+    public static final int[] SAMPLE_RATES = {44100, 22050, 11025, 16000};
     public static final boolean RECORDING_UNCOMPRESSED = true;
     public static final boolean RECORDING_COMPRESSED = false;
 

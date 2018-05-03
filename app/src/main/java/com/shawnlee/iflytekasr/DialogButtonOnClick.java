@@ -3,6 +3,8 @@ package com.shawnlee.iflytekasr;
 import android.content.DialogInterface;
 import android.net.Uri;
 
+import java.net.URI;
+
 
 /**
  * Created by Shawn.Lee on 2018/4/23.
@@ -12,6 +14,12 @@ import android.net.Uri;
 class DialogButtonOnClick implements DialogInterface.OnClickListener {
     public int index; // 表示选项的索引
     public Uri uri ;
+
+    public void setPath(String path) {
+        this.path = path;
+    }
+
+    public String path ;
     private Integer position;
 
     public DialogButtonOnClick(int index)

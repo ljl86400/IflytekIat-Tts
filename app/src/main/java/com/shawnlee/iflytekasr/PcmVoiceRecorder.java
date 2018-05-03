@@ -19,7 +19,7 @@ class PcmVoiceRecorder {
      */
     public void startVoice() {
         // 实现录音的代码
-        mPcmFileName = getPcmAudioPATH() + UUID.randomUUID().toString() + ".wav";       // 设置录音保存路径
+        mPcmFileName = getPcmAudioPATH() + UUID.randomUUID().toString() + ".wav";       // 设置录音保存路径&文件名
         String state = android.os.Environment.getExternalStorageState();        // 获取外部存储器的状态
 
         if (!state.equals(android.os.Environment.MEDIA_MOUNTED)) {

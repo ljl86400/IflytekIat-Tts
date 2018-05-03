@@ -16,6 +16,7 @@ import android.util.Log;
  * 录音的工具类。
  */
 public class ExtAudioRecorder {
+    private static final String TAG = "ExtAudioRecorder";
 
     private AuditRecorderConfiguration configuration;
 
@@ -27,12 +28,14 @@ public class ExtAudioRecorder {
         this.configuration = configuration;
 
         if (configuration.isUncompressed()) {
+            Log.i(TAG, "ExtAudioRecorder: 1");
             init(configuration.isUncompressed(),
                     configuration.getSource(),
                     configuration.getRate(),
                     configuration.getChannelConfig(),
                     configuration.getFormat());
         } else {
+            Log.i(TAG, "ExtAudioRecorder: 2");
             int i = 0;
             do {
                 init(configuration.isUncompressed(),

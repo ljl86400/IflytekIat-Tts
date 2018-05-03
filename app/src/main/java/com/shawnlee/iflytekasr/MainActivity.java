@@ -119,7 +119,7 @@ public class MainActivity extends Activity implements View.OnClickListener,View.
                                         break;
                                     case 2:
                                         Log.d(TAG, "onClick: " + uri.toString());
-                                        File file = new File(uri.toString());
+                                        File file = new File(path);
                                         System.gc();
                                         boolean success = file.delete();
                                         /*boolean result = false;
@@ -149,6 +149,7 @@ public class MainActivity extends Activity implements View.OnClickListener,View.
                 };       // 默认选中了第一个选项(播放)
                 Uri fileUri = Uri.parse("file://" + mVoicesFilesListAdapter.getList().get(position));   // 可以使用Uri格式的
                 dialogButtonOnClick.setUri(fileUri);
+                dialogButtonOnClick.setPath(mVoicesFilesListAdapter.getList().get(position).toString());
                 dialogButtonOnClick.setPosition(position);
                 AlertDialog.Builder mVoiceFilesProcessorDialog = new AlertDialog.Builder(MainActivity.this)
                         .setTitle("选择功能")
@@ -391,22 +392,23 @@ public class MainActivity extends Activity implements View.OnClickListener,View.
         //在传文件路径方式（-2）下，SDK通过应用层设置的ASR_SOURCE_PATH值， 直接读取音频文件。目前仅在SpeechRecognizer中支持。
         mIatSpeechRecognizer.setParameter(SpeechConstant.AUDIO_SOURCE, "-1");
         // 也可以像以下这样直接设置音频文件路径识别（要求设置文件在sdcard上的全路径）：
-        // mIatSpeechRecognizer.setParameter(SpeechConstant.AUDIO_SOURCE, "-2");
-        // mIatSpeechRecognizer.setParameter(SpeechConstant.ASR_SOURCE_PATH, "/sdcard/MyVoiceForder/Record/dd990669-5d8a-4f4a-94ee-e7b5bb0f027d.wav");
+//         mIatSpeechRecognizer.setParameter(SpeechConstant.AUDIO_SOURCE, "-2");
+            List<String> mVoicesFilesList = mVoicesFilesListAdapter.getList();                // 将存放语音文件信息的列表实例化,mVoiceFileList是局部变量，可以被重构
+//         mIatSpeechRecognizer.setParameter(SpeechConstant.ASR_SOURCE_PATH, mVoicesFilesList.get(position));
         ret = mIatSpeechRecognizer.startListening(mRecognizerListener);
         if (ret != ErrorCode.SUCCESS) {
             showTip("识别失败,错误码：" + ret);
         } else {
             Log.d(TAG, "获取选中音频流的完整地址:" + mVoicesFilesListAdapter.getList().get(position));
-            List<String> mVoicesFilesList = mVoicesFilesListAdapter.getList();                // 将存放语音文件信息的列表实例化,mVoiceFileList是局部变量，可以被重构
-            byte[] audioData = FucUtil.readAudioFile(MainActivity.this,mVoicesFilesList.get(position));
+            byte[] audioData = FucUtil.readAudioFile(mVoicesFilesList.get(position));
+//            byte[] audioData = FucUtil.readAudioFil(MainActivity.this, "iattest.wav");
             Log.d(TAG, "recognizeStream:音频流写入 " + audioData);
 
             if (null != audioData) {
                 Log.d(TAG, "recognizeStream: 开始识别");
                 // 一次（也可以分多次）写入音频文件数据，数据格式必须是采样率为8KHz或16KHz（本地识别只支持16K采样率，云端都支持），
                 // 位长16bit，单声道的wav或者pcm
-                // 写入8KHz采样的音频时，必须先调用setParameter(SpeechConstant.SAMPLE_RATE, "8000")设置正确的采样率
+//                mIatSpeechRecognizer.setParameter(SpeechConstant.SAMPLE_RATE, "8000");
                 // 注：当音频过长，静音部分时长超过VAD_EOS将导致静音后面部分不能识别。
                 // 音频切分方法：FucUtil.splitBuffer(byte[] buffer,int length,int spsize);
                 mIatSpeechRecognizer.writeAudio(audioData, 0, audioData.length);
